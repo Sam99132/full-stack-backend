@@ -7,13 +7,13 @@ const router = express.Router();
 
 router.post('/', verifyToken, async (req, res) => {
     try {
-        const { items } = req.body; 
+        const { items } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: 'Order must contain at least one item' });
         }
 
-        
+
         let total = 0;
         const orderItemsData = [];
 
@@ -38,9 +38,9 @@ router.post('/', verifyToken, async (req, res) => {
             });
         }
 
-        
+
         const order = await prisma.$transaction(async (prisma) => {
-            
+
             const newOrder = await prisma.order.create({
                 data: {
                     userId: req.user.userId,
@@ -59,7 +59,7 @@ router.post('/', verifyToken, async (req, res) => {
                 }
             });
 
-            
+
             for (const item of items) {
                 await prisma.product.update({
                     where: { id: item.productId },
@@ -140,10 +140,45 @@ router.get('/:id', verifyToken, async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        
+
         if (req.user.role !== 'ADMIN' && order.userId !== req.user.userId) {
             return res.status(403).json({ message: 'Access denied' });
         }
+
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update order status (Admin only)
+router.put('/:id/status', verifyToken, isAdmin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const orderId = parseInt(req.params.id);
+
+        if (!status) {
+            return res.status(400).json({ message: 'Status is required' });
+        }
+
+        const order = await prisma.order.update({
+            where: { id: orderId },
+            data: { status },
+            include: {
+                items: {
+                    include: {
+                        product: true
+                    }
+                },
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                }
+            }
+        });
 
         res.json(order);
     } catch (error) {
