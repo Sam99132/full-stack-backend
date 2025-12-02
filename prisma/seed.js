@@ -30,7 +30,7 @@ function generateProducts(count) {
         const adj = getRandomElement(adjectives);
         const noun = getRandomElement(nouns);
         const category = getRandomElement(categories);
-        const price = (Math.random() * 300 + 10).toFixed(2);
+        const price = (Math.random() * 19500 + 500).toFixed(2); // Price between 500 and 20000 INR
         const stock = Math.floor(Math.random() * 200);
 
         products.push({
@@ -48,13 +48,13 @@ function generateProducts(count) {
 async function main() {
     console.log('Start seeding ...');
 
-    
+
     await prisma.orderItem.deleteMany({});
     await prisma.product.deleteMany({});
 
-    const products = generateProducts(1000);
+    const products = generateProducts(200);
 
-    
+
     const batchSize = 100;
     for (let i = 0; i < products.length; i += batchSize) {
         const batch = products.slice(i, i + batchSize);
